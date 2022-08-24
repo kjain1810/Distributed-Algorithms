@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
     /* std::cout << "Have: " << last_term[0] << "0 1\n"; */
     for (int a = 2; a < 2 * numprocs; a++) {
       MPI_Status stat;
-      float data;
+      long double data;
       MPI_Recv(&data, 1, MPI_LONG_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG,
                MPI_COMM_WORLD, &stat);
       int procid = stat.MPI_SOURCE;
@@ -72,10 +72,10 @@ int main(int argc, char *argv[]) {
         last_term[procid] = data;
     }
     // iteratate over the result of each process and multiply
-    float ans = res_proc[0];
+    long double ans = res_proc[0];
     for (int a = 1; a < numprocs; a++) {
-      ans += res_proc[a] * abs(last_term[a - 1]);
-      /* last_term[a] *= abs(last_term[a - 1]); */
+      ans += res_proc[a] * std::abs(last_term[a - 1]);
+      last_term[a] *= std::abs(last_term[a - 1]);
     }
     std::cout << "Answer for x = " << x << " with " << accuracy
               << " iteration: " << ans << "\n";
