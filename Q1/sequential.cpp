@@ -33,13 +33,15 @@ int main() {
       k++;
       continue;
     }
+    float pivot = val_max;
     // swap hth and i_maxth row
     for (int i = 0; i < 2 * n; i++) {
       std::swap(A[i_max][i], A[h][i]);
     }
+    // set pivot
     // for all rows below the pivot:
     for (int i = h + 1; i < n; i++) {
-      float f = A[i][k] / A[h][k];
+      float f = A[i][k] / pivot;
       A[i][k] = 0;
       /* I[i][k] = 0; */
       for (int j = k + 1; j < 2 * n; j++) {

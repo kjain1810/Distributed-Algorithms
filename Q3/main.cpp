@@ -4,7 +4,7 @@
 #include <vector>
 
 int main(int argc, char *argv[]) {
-  double start_time = MPI_Wtime();
+  double start_time;
   long double x;
   int accuracy;
   int pow_begin;
@@ -19,6 +19,9 @@ int main(int argc, char *argv[]) {
   MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
   MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  start_time = MPI_Wtime();
 
   if (myid == 0) {
     std::cin >> x;
@@ -86,10 +89,13 @@ int main(int argc, char *argv[]) {
     MPI_Send(&toadd, 1, MPI_LONG_DOUBLE, 0, 1,
              MPI_COMM_WORLD); // toadd sent with tag 1
   }
-  MPI_Finalize();
+  MPI_Barrier(MPI_COMM_WORLD);
+  double cur_time = MPI_Wtime();
+  double end_time;
+  MPI_Reduce(&cur_time, &end_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
   if (myid == 0) {
-    double end_time = MPI_Wtime();
     std::cout << "Runtime: " << (end_time - start_time);
   }
+  MPI_Finalize();
   return 0;
 }
