@@ -24,7 +24,7 @@ int main() {
     int i_max = -1;
     float val_max = -1e9;
     for (int i = h; i < n; i++)
-      if (std::abs(A[i][k]) > val_max) {
+      if (std::abs(A[i][k]) >= val_max) {
         val_max = std::abs(A[i][k]);
         i_max = i;
       }
