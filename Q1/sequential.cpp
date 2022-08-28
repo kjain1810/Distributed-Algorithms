@@ -78,7 +78,7 @@ int main() {
 
   /* // BACK SUBSTITUTION PHASE */
   for (int a = n - 1; a >= 1; a--) {
-    for (int b = a - 1; b >= 0; b--) {
+    for (int b = 0; b < a; b++) {
       float factor = A[b][a];
       for (int c = 0; c < 2 * n; c++) {
         A[b][c] = A[b][c] - factor * A[a][c];

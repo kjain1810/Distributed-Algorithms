@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -N 1
-#SBATCH -n 2
+#SBATCH -n 4
 #SBATCH --mem-per-cpu=1024
 
 # module load hpcx-2.7.0/hpcx-ompi

@@ -16,22 +16,23 @@ void swapping(int i_max_overall, int h, int myid, int num_procs, int n,
     // both to swap are here
     int idx1 = i_max_overall / num_procs;
     int idx2 = h / num_procs;
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < 2 * n; i++)
       std::swap(arr[idx1][i], arr[idx2][i]);
   } else if (i_max_overall % num_procs == myid) {
     // send over the i_max_overall and recieve hth
     int idx1 = i_max_overall / num_procs;
     int dest = h % num_procs;
-    MPI_Send(arr[idx1], n, MPI_LONG_DOUBLE, dest, 1, MPI_COMM_WORLD);
-    MPI_Recv(arr[idx1], n, MPI_LONG_DOUBLE, dest, 1, MPI_COMM_WORLD, &status);
+    MPI_Send(arr[idx1], 2 * n, MPI_LONG_DOUBLE, dest, 1, MPI_COMM_WORLD);
+    MPI_Recv(arr[idx1], 2 * n, MPI_LONG_DOUBLE, dest, 1, MPI_COMM_WORLD,
+             &status);
   } else if (h % num_procs == myid) {
     // recieve i_maxth and send over hth
-    long double new_row[n];
+    long double new_row[2 * n];
     int src = i_max_overall % num_procs;
     int idx1 = h / num_procs;
-    MPI_Recv(new_row, n, MPI_LONG_DOUBLE, src, 1, MPI_COMM_WORLD, &status);
-    MPI_Send(arr[idx1], n, MPI_LONG_DOUBLE, src, 1, MPI_COMM_WORLD);
-    for (int i = 0; i < n; i++)
+    MPI_Recv(new_row, 2 * n, MPI_LONG_DOUBLE, src, 1, MPI_COMM_WORLD, &status);
+    MPI_Send(arr[idx1], 2 * n, MPI_LONG_DOUBLE, src, 1, MPI_COMM_WORLD);
+    for (int i = 0; i < 2 * n; i++)
       arr[idx1][i] = new_row[i];
     /* MPI_Bcast(arr[idx1], n, MPI_LONG_DOUBLE, myid, MPI_COMM_WORLD); */
   }
@@ -40,15 +41,15 @@ void swapping(int i_max_overall, int h, int myid, int num_procs, int n,
 void get_hth_row_and_reduce(int n, int num_procs, int num_rows, int myid, int h,
                             int k, long double pivot, long double **arr) {
   // get the hth row now
-  long double vec[n];
+  long double vec[2 * n];
   int root = h % num_procs;
   if (root == myid)
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < 2 * n; i++)
       vec[i] = arr[h / num_procs][i];
-  MPI_Bcast(vec, n, MPI_LONG_DOUBLE, root, MPI_COMM_WORLD);
+  MPI_Bcast(vec, 2 * n, MPI_LONG_DOUBLE, root, MPI_COMM_WORLD);
   // reduce the row with the pivot and the hth row
   std::cout << "on iteration " << k << " proc " << myid << " got: ";
-  for (int i = 0; i < n; i++)
+  for (int i = 0; i < 2 * n; i++)
     std::cout << vec[i] << " ";
   std::cout << std::endl;
   for (int i = myid; i < n; i += num_procs) {
@@ -57,7 +58,7 @@ void get_hth_row_and_reduce(int n, int num_procs, int num_rows, int myid, int h,
     int idx = i / num_procs;
     long double f = arr[idx][k] / pivot;
     arr[idx][k] = 0;
-    for (int j = k + 1; j < n; j++)
+    for (int j = k + 1; j < 2 * n; j++)
       arr[idx][j] -= vec[j] * f;
   }
 }
@@ -72,6 +73,7 @@ int main(int argc, char *argv[]) {
   MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
   MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+  double start_time = MPI_Wtime();
 
   int num_types = 2;
   int blockSize[] = {1, 1};
@@ -87,11 +89,12 @@ int main(int argc, char *argv[]) {
   }
   MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
   num_rows = n / num_procs;
+  num_rows = n / num_procs;
   if (myid < n % num_procs)
     num_rows++;
   arr = (long double **)malloc(num_rows * sizeof(long double *));
   for (int i = 0; i < n; i++)
-    arr[i] = (long double *)malloc(n * sizeof(long double));
+    arr[i] = (long double *)malloc(2 * n * sizeof(long double));
   /* std::cout << myid << ": " << n << " " << num_rows << std::endl; */
   if (myid == 0) {
     // Take array as input
@@ -106,8 +109,10 @@ int main(int argc, char *argv[]) {
       // Else store it here
       else {
         int row_idx_here = i / num_procs;
-        for (int j = 0; j < n; j++)
+        for (int j = 0; j < n; j++) {
           arr[row_idx_here][j] = vec[j];
+          arr[row_idx_here][n + j] = (long double)(j == i);
+        }
       }
     }
   } else {
@@ -119,8 +124,10 @@ int main(int argc, char *argv[]) {
                &status);
       int row_idx = status.MPI_TAG;
       int row_idx_here = row_idx / num_procs;
-      for (int j = 0; j < n; j++)
+      for (int j = 0; j < n; j++) {
         arr[row_idx_here][j] = vec[j];
+        arr[row_idx_here][n + j] = (long double)(j == row_idx);
+      }
     }
   }
   /* std::cout << myid << " reached barrier!" << std::endl; */
@@ -141,6 +148,8 @@ int main(int argc, char *argv[]) {
   int h = 0;
   for (int k = 0; k < n; k++) {
     std::cout << myid << " : " << k << std::endl;
+
+    // finding the local pivot
     int i_max = -1;
     long double val_max = -1;
     for (int i = myid; i < n; i += num_procs) {
@@ -150,6 +159,8 @@ int main(int argc, char *argv[]) {
         i_max = i;
       }
     }
+
+    // collect the pivot at process 0
     pivotMesg mesg;
     long double pivot;
     if (myid == 0) {
@@ -168,20 +179,25 @@ int main(int argc, char *argv[]) {
       mesg.idx = i_max;
       MPI_Send(&mesg, 1, pivotMesg_mpi, 0, 0, MPI_COMM_WORLD);
     }
+    // broadcast the pivot
     MPI_Bcast(&pivot, 1, MPI_LONG_DOUBLE, 0, MPI_COMM_WORLD);
+    // if no pivot, move forward
     if (pivot == 0)
       continue;
+    // broadcast the pivot row
     MPI_Bcast(&i_max, 1, MPI_INT, 0, MPI_COMM_WORLD);
     std::cout << "proc " << myid << " with pivot " << pivot << " of row "
               << i_max << std::endl;
+    // swap current and pivot rows
     swapping(i_max, h, myid, num_procs, n, arr);
+    // do operation using pivot row
     get_hth_row_and_reduce(n, num_procs, num_rows, myid, h, k, pivot, arr);
     h++;
     std::cout << "after iteration " << k << ": " << std::endl;
     for (int i = myid; i < n; i += num_procs) {
       int idx = i / num_procs;
       std::cout << i << ": ";
-      for (int j = 0; j < n; j++)
+      for (int j = 0; j < 2 * n; j++)
         std::cout << arr[idx][j] << " ";
       std::cout << std::endl;
     }
@@ -189,13 +205,43 @@ int main(int argc, char *argv[]) {
   for (int i = myid; i < n; i += num_procs) {
     int idx = i / num_procs;
     long double here = arr[idx][i];
-    for (int j = 0; j < n; j++)
+    for (int j = 0; j < 2 * n; j++)
       arr[idx][j] /= here;
   }
   // wait for everyone to finish with gauss jordan
   MPI_Barrier(MPI_COMM_WORLD);
+
   // start back substitution
-  for (int a = n - 1; a >= 0; a--) {
+  for (int a = n - 1; a >= 1; a--) {
+    int src_proc = a % num_procs;
+    long double vec[2 * n];
+    if (src_proc == myid) {
+      int idx = a / num_procs;
+      for (int i = 0; i < 2 * n; i++)
+        vec[i] = arr[idx][i];
+    }
+    MPI_Bcast(vec, 2 * n, MPI_LONG_DOUBLE, src_proc, MPI_COMM_WORLD);
+    for (int i = myid; i < a; i += num_procs) {
+      int idx = i / num_procs;
+      long double factor = arr[idx][a];
+      for (int j = 0; j < 2 * n; j++)
+        arr[idx][j] = arr[idx][j] - factor * vec[j];
+    }
+  }
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  double cur_time = MPI_Wtime();
+  double end_time;
+  MPI_Reduce(&cur_time, &end_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+  if (myid == 0) {
+    std::cout << "Runtime: " << (end_time - start_time) << std::endl;
+  }
+  for (int a = myid; a < n; a += num_procs) {
+    std::cout << "Final " << a << ": ";
+    int idx = a / num_procs;
+    for (int b = 0; b < 2 * n; b++)
+      std::cout << arr[idx][b] << " ";
+    std::cout << "\n";
   }
   MPI_Finalize();
   return 0;
