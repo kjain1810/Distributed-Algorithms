@@ -1,3 +1,4 @@
+#include <ctime>
 #include <iostream>
 #include <vector>
 
@@ -14,6 +15,7 @@ int main() {
       /* else */
       /*   I[a][b] = 0; */
     }
+  time_t ts = clock();
   for (int a = 0; a < n; a++)
     for (int b = 0; b < n; b++)
       A[a].push_back((int)(a == b));
@@ -52,29 +54,37 @@ int main() {
     h++;
     k++;
 
-    std::cout << h << " " << k << "\n";
+    /* std::cout << h << " " << k << "\n"; */
+    /* for (int i = 0; i < n; i++) { */
+    /*   for (int j = 0; j < 2 * n; j++) { */
+    /*     if (j == n) */
+    /*       std::cout << "| "; */
+    /*     std::cout << A[i][j] << " "; */
+    /*   } */
+    /*   std::cout << "\n"; */
+    /* } */
+    /* } */
     for (int i = 0; i < n; i++) {
-      for (int j = 0; j < 2 * n; j++) {
-        if (j == n)
-          std::cout << "| ";
-        std::cout << A[i][j] << " ";
-      }
-      std::cout << "\n";
+      float here = A[i][i];
+      for (int j = 0; j < 2 * n; j++)
+        A[i][j] /= here;
     }
+
+    /* std::cout << "Successful\n"; */
+    /* for (int a = 0; a < n; a++) { */
+    /*   for (int b = n; b < 2 * n; b++) */
+    /*     std::cout << A[a][b] << " "; */
+    /*   std::cout << "\n"; */
   }
-  for (int i = 0; i < n; i++) {
-    float here = A[i][i];
-    for (int j = 0; j < 2 * n; j++)
-      A[i][j] /= here;
-  }
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < 2 * n; j++) {
-      if (j == n)
-        std::cout << "| ";
-      std::cout << A[i][j] << " ";
-    }
-    std::cout << "\n";
-  }
+  std::cout << "Gauss Jordan done\n";
+  /* for (int i = 0; i < n; i++) { */
+  /*   for (int j = 0; j < 2 * n; j++) { */
+  /*     if (j == n) */
+  /*       std::cout << "| "; */
+  /*     std::cout << A[i][j] << " "; */
+  /*   } */
+  /*   std::cout << "\n"; */
+  /* } */
 
   /* // BACK SUBSTITUTION PHASE */
   for (int a = n - 1; a >= 1; a--) {
@@ -87,11 +97,6 @@ int main() {
     }
   }
 
-  std::cout << "Successful\n";
-  for (int a = 0; a < n; a++) {
-    for (int b = n; b < 2 * n; b++)
-      std::cout << A[a][b] << " ";
-    std::cout << "\n";
-  }
+  std::cout << (double)(clock() - ts) / CLOCKS_PER_SEC << std::endl;
   return 0;
 }

@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
     /* x = 8; */
     /* accuracy = 100; */
   }
-  MPI_Bcast(&x, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&x, 1, MPI_LONG_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(&accuracy, 1, MPI_INT, 0, MPI_COMM_WORLD);
   toadd = -1;
   res_here = 0;
@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
     toadd *= (x / a);
     toadd *= -1;
     res_here += toadd;
-    /* std::cout << myid << " " << a << " " << toadd << "\n"; */
+    /* std::cout << myid << " " << a << " " << toadd << std::endl; */
   }
   if (myid == 0) {
     // collect the result and last term from each process
@@ -67,8 +67,8 @@ int main(int argc, char *argv[]) {
                MPI_COMM_WORLD, &stat);
       int procid = stat.MPI_SOURCE;
       int tag = stat.MPI_TAG;
-      /* std::cout << "Recieved: " << data << " " << procid << " " << tag <<
-       * "\n"; */
+      /* std::cout << "Recieved: " << data << " " << procid << " " << tag */
+      /*           << std::endl; */
       if (tag == 0)
         res_proc[procid] = data;
       else
@@ -80,8 +80,9 @@ int main(int argc, char *argv[]) {
       ans += res_proc[a] * std::abs(last_term[a - 1]);
       last_term[a] *= std::abs(last_term[a - 1]);
     }
-    std::cout << "Answer for x = " << x << " with " << accuracy
-              << " iteration: " << ans << "\n";
+    std::cout << "Processors: " << numprocs << std::endl;
+    std::cout << "Accuracy: " << x << std::endl;
+    std::cout << "Answer: " << ans << std::endl;
   } else {
     // send the result from this process to the main process
     MPI_Send(&res_here, 1, MPI_LONG_DOUBLE, 0, 0,
@@ -94,7 +95,8 @@ int main(int argc, char *argv[]) {
   double end_time;
   MPI_Reduce(&cur_time, &end_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
   if (myid == 0) {
-    std::cout << "Runtime: " << (end_time - start_time);
+    std::cout << std::fixed << std::setprecision(10);
+    std::cout << "Runtime: " << 1000 * (end_time - start_time) << std::endl;
   }
   MPI_Finalize();
   return 0;

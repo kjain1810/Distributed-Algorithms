@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -N 1
+#SBATCH -N 2
 #SBATCH -n 4
 #SBATCH --mem-per-cpu=1024
 
@@ -7,4 +7,16 @@
 
 mpic++ main.cpp
 
-mpirun --use-hwthread-cpus a.out < input.txt > out
+rm out
+touch out
+
+mpirun --use-hwthread-cpus a.out > out
+
+# echo "Running 100" >> out
+# mpirun --use-hwthread-cpus a.out < input100.txt >> out
+
+# echo "Running 1000" >> out
+# mpirun --use-hwthread-cpus a.out < input1000.txt >> out
+
+# echo "Running 10000" >> out
+# mpirun --use-hwthread-cpus a.out < input10000.txt >> out
