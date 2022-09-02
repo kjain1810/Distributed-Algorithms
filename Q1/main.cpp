@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
   MPI_Type_create_struct(num_types, blockSize, offsets, types, &pivotMesg_mpi);
   MPI_Type_commit(&pivotMesg_mpi);
 
-  std::freopen("./input10000.txt", "r", stdin);
+  std::freopen("./input1000.txt", "r", stdin);
   std::cin >> n;
 
   num_rows = n / num_procs;
@@ -97,11 +97,11 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < num_rows; i++)
     arr[i] = (float *)malloc((2 * n + 1) * sizeof(float));
 
-  std::cout << myid << ": " << n << " " << num_rows << "\n";
+  /* std::cout << myid << ": " << n << " " << num_rows << "\n"; */
   MPI_Barrier(MPI_COMM_WORLD);
   int idxHere = 0;
   for (int i = 0; i < n; i++) {
-    std::cout << myid << " " << i << "\n";
+    /* std::cout << myid << " " << i << "\n"; */
     if (i % num_procs == myid) {
       for (int j = 0; j < n; j++) {
         std::cin >> arr[idxHere][j];
@@ -116,11 +116,11 @@ int main(int argc, char *argv[]) {
       for (int j = 0; j < n; j++)
         std::cin >> tmp;
     }
-    if (idxHere > num_rows)
-      std::cout << "wut ze fuk?\n";
+    /* if (idxHere > num_rows) */
+    /*   std::cout << "wut ze fuk?\n"; */
   }
-  std::cout << myid << " reached input barrier!"
-            << "\n";
+  /* std::cout << myid << " reached input barrier!" */
+  /*           << "\n"; */
   /* for (int i = 0; i < num_rows; i++) { */
   /*   std::cout << num_procs * i + myid << ": "; */
   /*   for (int j = 0; j < n; j++) */
@@ -138,7 +138,7 @@ int main(int argc, char *argv[]) {
 
   int h = 0;
   for (int k = 0; k < n; k++) {
-    std::cout << myid << " : " << k << "\n";
+    /* std::cout << myid << " : " << k << "\n"; */
 
     // finding the local pivot
     int i_max = -1;
