@@ -6,4 +6,4 @@
 
 mpic++ main.cpp
 
-mpirun --use-hwthread-cpus a.out < input.txt > out
+mpirun --use-hwthread-cpus a.out > out
